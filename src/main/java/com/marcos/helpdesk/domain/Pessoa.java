@@ -1,24 +1,47 @@
 package com.marcos.helpdesk.domain;
 
+import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.HashSet;
 
-
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.marcos.helpdesk.domain.enums.Perfil;
 
-public abstract class Pessoa {
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+@Entity(name = "TB_PESSOA")
+public abstract class Pessoa implements Serializable {
 	
+	private static final long serialVersionUID = 1L;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	protected Integer id;
 	protected String nome;
+	@Column(unique = true)
 	protected String cpf;
+	@Column(unique = true)
 	protected String email;
 	protected String senha;
-	protected Perfil perfis;
+	@ElementCollection(fetch = FetchType.EAGER)
+	@CollectionTable(name = "PERFIS")
+	protected Set<Integer> perfis = new HashSet<>();
+	
+	@JsonFormat(pattern = "dd/MM/yyyy")
 	protected LocalDate dataCriacao = LocalDate.now();
 	
 	
 	public Pessoa() {
 		super();
-		this.perfis = Perfil.CLIENTE;
+		addPerfis(Perfil.CLIENTE);
 	}
 
 
@@ -29,6 +52,7 @@ public abstract class Pessoa {
 		this.cpf = cpf;
 		this.email = email;
 		this.senha = senha;
+		addPerfis(Perfil.CLIENTE);
 	}
 
 
@@ -82,13 +106,13 @@ public abstract class Pessoa {
 	}
 
 
-	public Perfil getPerfis() {
-		return perfis;
+	public Set<Perfil> getPerfis() {
+		return perfis.stream().map(x -> Perfil.toEnum(x)).collect(Collectors.toSet());
 	}
 
 
-	public void setPerfis(Perfil perfis) {
-		this.perfis = perfis;
+	public void addPerfis(Perfil perfis) {
+		this.perfis.add(perfis.getCodigo());
 	}
 
 
